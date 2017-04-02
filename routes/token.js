@@ -1,45 +1,69 @@
 'use strict';
 
 const express = require('express');
-
-// eslint-disable-next-line new-cap
 const router = express.Router();
 const knex = require('../knex');
 
-// Requiring npm packages
 const humps = require('humps');
 const bcrypt = require('bcrypt-as-promised');
-var cookieSession = require('cookie-session');
-var jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
+const cookieSession = require('cookie-session');
 
-// YOUR CODE HERE
+// set cookie session
 router.use(cookieSession({
   name: 'session',
-  keys: ['key1','key2'],
-
-  // Cookie Options
+  keys: ['chocolatechip'],
   maxAge: 24 * 60 * 60 * 1000
-}))
+}));
 
-router.get('/token', isAllowed, (req, res, next) => {
-  let token = jwt.sign({ isAuth: true }, 'secretpassword');
-  req.session.jwt = token;
-  res.set('Content-Type', 'application/json')
-  res.send(req.user);
-})
+router.get('/token', isAuthen, (req, res, next) => {
+  res.send(req.user)
+});
 
 router.post('/token', (req, res, next) => {
+  let email = req.body.email;
+  let password = req.body.password;
 
-})
+  if (!email || !password || email === '' || password === '') {
+    res.status(400).send('Bad email or password');
+  }
+  else {
+    knex('users')
+      .where('email', email)
+      .returning('id', 'first_name', 'last_name', 'email', 'hashed_password')
+      .then(users => {
+        let user = users[0];
+        bcrypt.compare(password, user.hashed_password)
+          .then(result => {
+            if (result) {
+              let token = jwt.sign({
+                isAuthen: true
+              }, 'shhhh');
 
-function isAllowed(req, res, next) {
+              req.session.jwt = token;
+
+              res.cookie('token', token, {
+                httpOnly: true
+              });
+              delete user.hashed_password;
+              res.send(humps.camelizeKeys(user))
+            }
+            else {
+              res.status(400).send('Bad email or password');
+            }
+          });
+      });
+  }
+});
+
+function isAuthen(req, res, next) {
   if (req.session.jwt) {
-    jwt.verify(req.session.jwt, 'secretpassword', (err, decoded) => {
+    jwt.verify(req.session.jwt, 'shhhh', function(err, decoded) {
       if (err) {
         res.sendStatus(403);
       }
       else {
-        req.user = decoded;
+        req.user = true;
         next();
       }
     });
