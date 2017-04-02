@@ -5,7 +5,7 @@ const router = express.Router();
 const knex = require('../knex');
 
 const humps = require('humps');
-const bcrypt = require('bcrypt-as-promised');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cookieSession = require('cookie-session');
 
@@ -32,6 +32,11 @@ router.post('/token', (req, res, next) => {
       .where('email', email)
       .returning('id', 'first_name', 'last_name', 'email', 'hashed_password')
       .then(users => {
+        if (users.length === 0) {
+          res.set('Content-Type', 'plain/html')
+          res.status(400).send('Bad email or password');
+        }
+        else {
         let user = users[0];
         bcrypt.compare(password, user.hashed_password)
           .then(result => {
@@ -46,14 +51,21 @@ router.post('/token', (req, res, next) => {
                 httpOnly: true
               });
               delete user.hashed_password;
-              res.send(humps.camelizeKeys(user))
+              res.send(humps.camelizeKeys(user));
             }
             else {
+              res.set('Content-Type', 'plain/html');
               res.status(400).send('Bad email or password');
             }
           });
+        }
       });
   }
+});
+
+router.delete('/token', (req, res, next) => {
+  res.cookie('token', '');
+  res.send(true);
 });
 
 function isAuthen(req, res, next) {
