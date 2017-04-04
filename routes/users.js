@@ -7,47 +7,44 @@ const router = express.Router();
 const knex = require('../knex');
 const bcrypt = require('bcrypt-as-promised');
 const humps = require('humps');
+const boom = require('boom');
 
 // YOUR CODE HERE
-router.post('/users', (req, res, next) => {
-  if (!req.body.email || req.body.email === '') {
-    res.set('Content-Type', 'plain/html');
-    res.status(400).send('Email must not be blank');
+router.post('/', (req, res, next) => {
+  let password = req.body.password;
+  let email = req.body.email;
+  let first_name = req.body.firstName;
+  let last_name = req.body.lastName;
+
+  if (!email || email === '') {
+    return next(boom.create(400, 'Email must not be blank'));
   }
 
-  else if (!req.body.password) {
-    res.set('Content-Type', 'plain/html');
-    res.status(400).send('Password must be at least 8 characters long');
+  if (!password || password.length < 8) {
+    return next(boom.create(400, 'Password must be at least 8 characters long'));
   }
-  else {
-    knex('users')
-      .where('email', req.body.email)
-      .then(emails => {
-        if (emails.length !== 0) {
-          res.set('Content-Type', 'plain/htmls');
-          res.status(400).send('Email already exists')
-        }
-        else {
-          bcrypt.hash(req.body.password, 12)
-            .then((hashed_password) => {
-              return knex('users')
-                .insert({
-                  first_name: req.body.firstName,
-                  last_name: req.body.lastName,
-                  email: req.body.email,
-                  hashed_password: hashed_password
-                })
-                .returning(['id', 'first_name', 'last_name', 'email']);
-            })
-            .then(users => {
-              res.send(humps.camelizeKeys(users[0]));
-            })
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      })
-    }
-})
+
+  knex('users')
+    .where('email', email)
+    .then(emails => {
+      if (emails.length !== 0) {
+        return next(boom.create(400, 'Email already exists'));
+      }
+
+      bcrypt.hash(password, 12)
+        .then(hashed_password => {
+          return knex('users')
+            .insert({ first_name, last_name, email, hashed_password }, '*')
+            .first();
+        })
+        .then(insertedUser => {
+          delete insertedUser.hashed_password;
+          res.send(humps.camelizeKeys(insertedUser));
+        });
+    })
+    .catch(err => {
+      throw err;
+    });
+});
 
 module.exports = router;

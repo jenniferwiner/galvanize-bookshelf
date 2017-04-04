@@ -1,13 +1,13 @@
 'use strict';
 
 const express = require('express');
-// eslint-disable-next-line new-cap
 const router = express.Router();
-const knex = require('../knex')
-const humps = require('humps')
+const knex = require('../knex');
+const humps = require('humps');
+const boom = require('boom');
 
 // YOUR CODE HERE
-router.get('/books', (req, res, next) => {
+router.get('/', (req, res, next) => {
   knex('books')
     .orderBy('title', 'asc')
     .then(data => {
@@ -15,7 +15,7 @@ router.get('/books', (req, res, next) => {
     });
 });
 
-router.get('/books/:id', (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   let id = req.params.id;
   if (isNaN(id)) {
     res.sendStatus(404);
@@ -34,29 +34,24 @@ router.get('/books/:id', (req, res, next) => {
   }
 });
 
-router.post('/books', (req, res, next) => {
-
+router.post('/', (req, res, next) => {
+  // Error handling
   if (!req.body.title) {
-    res.set('Content-Type', 'text/plain');
-    res.status(400).send('Title must not be blank');
+    return next(boom.create(400, 'Title must not be blank'));
   }
-  else if (!req.body.author) {
-    res.set('Content-Type', 'text/plain');
-    res.status(400).send('Author must not be blank');
+  if (!req.body.author) {
+    return next(boom.create(400, 'Author must not be blank'));
   }
-  else if (!req.body.genre) {
-    res.set('Content-Type', 'text/plain')
-    res.status(400).send('Genre must not be blank');
+  if (!req.body.genre) {
+    return next(boom.create(400, 'Genre must not be blank'));
   }
-  else if (!req.body.description) {
-    res.set('Content-Type', 'text/plain');
-    res.status(400).send('Description must not be blank');
+  if (!req.body.description) {
+    return next(boom.create(400, 'Description must not be blank'));
   }
-  else if (!req.body.coverUrl) {
-    res.set('Content-Type', 'text/plain');
-    res.status(400).send('Cover URL must not be blank');
+  if (!req.body.coverUrl) {
+    return next(boom.create(400, 'Cover URL must not be blank'));
   }
-  else {
+
   knex('books')
     .insert({
       title: req.body.title,
@@ -68,10 +63,9 @@ router.post('/books', (req, res, next) => {
     .then(data => {
       res.send(humps.camelizeKeys(data[0]));
     });
-  }
 });
 
-router.patch('/books/:id', (req, res, next) => {
+router.patch('/:id', (req, res, next) => {
   let id = req.params.id;
   if (isNaN(id) || id < 0) {
     res.sendStatus(404);
@@ -97,7 +91,7 @@ router.patch('/books/:id', (req, res, next) => {
   }
 });
 
-router.delete('/books/:id', (req, res, next) => {
+router.delete('/:id', (req, res, next) => {
   let id = req.params.id;
   if (isNaN(id)) {
     res.sendStatus(404);
