@@ -7,6 +7,7 @@ const humps = require('humps');
 const boom = require('boom');
 
 // YOUR CODE HERE
+
 router.get('/', (req, res, next) => {
   knex('books')
     .orderBy('title', 'asc')
@@ -17,21 +18,19 @@ router.get('/', (req, res, next) => {
 
 router.get('/:id', (req, res, next) => {
   let id = req.params.id;
+
   if (isNaN(id)) {
-    res.sendStatus(404);
+    return next(boom.create(404));
   }
-  else {
-    knex('books')
-      .where('id', id)
-      .then(data => {
-        if (data.length === 0) {
-          res.sendStatus(404);
-        }
-        else {
-          res.send(humps.camelizeKeys(data[0]));
-        }
-      });
-  }
+
+  knex('books')
+    .where('id', id)
+    .then(data => {
+      if (data.length === 0) {
+        return next(boom.create(404));
+      }
+      res.send(humps.camelizeKeys(data[0]));
+    });
 });
 
 router.post('/', (req, res, next) => {
@@ -67,49 +66,48 @@ router.post('/', (req, res, next) => {
 
 router.patch('/:id', (req, res, next) => {
   let id = req.params.id;
+
   if (isNaN(id) || id < 0) {
-    res.sendStatus(404);
+    return next(boom.create(404));
   }
-  else {
-    knex('books')
-      .max('id')
-      .returning('id')
-      .then(maxID => {
-        if (maxID[0].max <= id) {
-          res.sendStatus(404);
-        }
-        else {
-          return knex('books')
-            .where('id', id)
-            .update(humps.decamelizeKeys(req.body))
-            .returning('*')
-            .then(data => {
-              res.send(humps.camelizeKeys(data[0]));
-            });
-        }
-      });
-  }
+
+  knex('books')
+    .max('id')
+    .returning('id')
+    .then(maxID => {
+      if (maxID[0].max <= id) {
+        return next(boom.create(404));
+      }
+
+      return knex('books')
+        .where('id', id)
+        .update(humps.decamelizeKeys(req.body))
+        .returning('*')
+        .then(data => {
+          res.send(humps.camelizeKeys(data[0]));
+        });
+    });
 });
 
 router.delete('/:id', (req, res, next) => {
   let id = req.params.id;
+
   if (isNaN(id)) {
-    res.sendStatus(404);
+    return next(boom.create(404));
   }
-  else {
-    knex('books')
-      .where('id', id)
-      .returning(['title', 'author', 'genre', 'description', 'cover_url'])
-      .del()
-      .then(data => {
-        if (data.length === 0) {
-          res.sendStatus(404);
-        }
-        else {
-          res.send(humps.camelizeKeys(data[0]));
-        }
-      });
-  }
+
+  knex('books')
+    .where('id', id)
+    .returning(['title', 'author', 'genre', 'description', 'cover_url'])
+    .del()
+    .then(data => {
+      if (data.length === 0) {
+        res.sendStatus(404);
+      }
+      else {
+        res.send(humps.camelizeKeys(data[0]));
+      }
+    });
 });
 
 module.exports = router;
