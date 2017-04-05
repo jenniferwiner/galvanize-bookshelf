@@ -8,7 +8,7 @@
     "knex": "knex",
     "lint": "eslint  --ignore-pattern public/js/vendor",
     "nf": "nf start",
-    "start": "node ./bin/www",
+    "start": "node server.js",
     "test": "mocha",
     "nodemon": "node server.js"
   },
