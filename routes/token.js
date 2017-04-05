@@ -35,8 +35,12 @@ router.post('/', (req, res, next) => {
   let email = req.body.email;
   let password = req.body.password;
 
-  if (!email || !password || email === '' || password === '') {
-    return next(boom.create(400, 'Bad email or password'));
+  if (!email || email === '') {
+    return next(boom.create(400, 'Email must not be blank'));
+  }
+
+  if (!password || password === '') {
+    return next(boom.create(400, 'Password must not be blank'));
   }
 
   knex('users')

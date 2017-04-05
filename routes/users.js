@@ -35,11 +35,10 @@ router.post('/', (req, res, next) => {
         .then(hashed_password => {
           return knex('users')
             .insert({ first_name, last_name, email, hashed_password }, '*')
-            .first();
-        })
-        .then(insertedUser => {
-          delete insertedUser.hashed_password;
-          res.send(humps.camelizeKeys(insertedUser));
+            .then(insertedUser => {
+              delete insertedUser[0].hashed_password;
+              res.send(humps.camelizeKeys(insertedUser[0]));
+            });
         });
     })
     .catch(err => {
