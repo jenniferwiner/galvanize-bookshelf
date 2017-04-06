@@ -6,6 +6,9 @@ const knex = require('../knex');
 const humps = require('humps');
 const boom = require('boom');
 
+const ev = require('express-validation');
+const validations = require('../validations/books');
+
 // YOUR CODE HERE
 
 router.get('/', (req, res, next) => {
@@ -33,7 +36,7 @@ router.get('/:id', (req, res, next) => {
     });
 });
 
-router.post('/', (req, res, next) => {
+router.post('/', ev(validations.post), (req, res, next) => {
   // Error handling
   if (!req.body.title) {
     return next(boom.create(400, 'Title must not be blank'));

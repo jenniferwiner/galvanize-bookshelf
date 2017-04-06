@@ -7,6 +7,9 @@ const humps = require('humps');
 const cookieSession = require('cookie-session');
 const boom = require('boom');
 
+const ev = require('express-validation');
+const validations = require('../validations/favorites');
+
 // YOUR CODE HERE
 const confirmToken = (req, res, next) => {
   if (!req.cookies.token) {
@@ -43,7 +46,7 @@ router.get('/', confirmToken, (req, res) => {
     });
 });
 
-router.post('/', confirmToken, (req, res, next) => {
+router.post('/', ev(validations.post), confirmToken, (req, res, next) => {
   let bookId = req.body.bookId;
 
   if (isNaN(bookId)) {

@@ -9,8 +9,11 @@ const bcrypt = require('bcrypt-as-promised');
 const humps = require('humps');
 const boom = require('boom');
 
+const ev = require('express-validation');
+const validations = require('../validations/users');
+
 // YOUR CODE HERE
-router.post('/', (req, res, next) => {
+router.post('/', ev(validations.post), (req, res, next) => {
   let password = req.body.password;
   let email = req.body.email;
   let first_name = req.body.firstName;
