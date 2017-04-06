@@ -10,6 +10,9 @@ const jwt = require('jsonwebtoken');
 const cookieSession = require('cookie-session');
 const boom = require('boom');
 
+const ev = require('express-validation');
+const validations = require('../validations/token');
+
 // set cookie session
 router.use(cookieSession({
   name: 'session',
@@ -31,7 +34,7 @@ router.get('/', (req, res, next) => {
   }
 });
 
-router.post('/', (req, res, next) => {
+router.post('/', ev(validations.post), (req, res, next) => {
   let email = req.body.email;
   let password = req.body.password;
 
