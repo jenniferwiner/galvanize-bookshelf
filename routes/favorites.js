@@ -23,7 +23,6 @@ router.get('/check', confirmToken, (req, res, next) => {
   }
 
   knex('favorites')
-    .innerJoin('books', 'favorites.book_id', 'books.id')
     .where('book_id', bookId)
     .then(favorites => {
       if (favorites.length === 0) {
